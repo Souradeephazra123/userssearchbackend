@@ -5,10 +5,10 @@ const teamSchema = new mongoose.Schema({
   members: [
     {
       _id: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-      fname: String,
-      lname: String,
+      first_name: String,
+      last_name: String,
       email: String,
-      mobile: Number,
+      // mobile: Number,
       status: String,
       gender: String,
       domain: String,

@@ -10,14 +10,23 @@ exports.userpost = async (req, res) => {
   // console.log(req.body);
 
   const file = req.file.filename;
-  const { fname, lname, email, mobile, gender, location, domain, status } =
-    req.body;
+  // const file = req.file ? req.file.filename : req.body.imageURL;
+  const {
+    first_name,
+    last_name,
+    email,
+    // mobile,
+    gender,
+    location,
+    domain,
+    status,
+  } = req.body;
 
   if (
-    !fname ||
-    !lname ||
+    !first_name ||
+    !last_name ||
     !email ||
-    !mobile ||
+    // !mobile ||
     !gender ||
     !location ||
     !domain ||
@@ -34,16 +43,16 @@ exports.userpost = async (req, res) => {
     } else {
       const datecreated = moment(new Date()).format("DD-MM-YYYY hh:mm:ss");
       const userData = new users({
-        fname,
-        lname,
+        first_name,
+        last_name,
         email,
-        mobile,
+        // mobile,
         gender,
         location,
         domain,
         status,
         profile: file,
-        // imageURL,
+
         datecreated,
       });
       await userData.save();
@@ -63,9 +72,9 @@ exports.userget = async (req, res) => {
   const status = req.query.status || "";
   const domain = req.query.domain || "";
   const page = req.query.page || 1;
-  const ITEM_PER_PAGE = 4;
+  const ITEM_PER_PAGE = 50;
   const query = {
-    fname: { $regex: search, $options: "i" },
+    first_name: { $regex: search, $options: "i" },
   };
 
   if (gender !== "All") {
@@ -116,10 +125,10 @@ exports.singleuserget = async (req, res) => {
 exports.useredit = async (req, res) => {
   const { id } = req.params;
   const {
-    fname,
-    lname,
+    first_name,
+    last_name,
     email,
-    mobile,
+    // mobile,
     gender,
     location,
     domain,
@@ -133,10 +142,10 @@ exports.useredit = async (req, res) => {
     const updateUser = await users.findByIdAndUpdate(
       { _id: id },
       {
-        fname,
-        lname,
+        first_name,
+        last_name,
         email,
-        mobile,
+        // mobile,
         gender,
         location,
         domain,
@@ -187,4 +196,128 @@ exports.userstatus = async (req, res) => {
   }
 };
 
+// Register user from backend using raw data
+// exports.registerUserFromRawData = async (req, res) => {
+//   // const profile=req.body.imageURL;
+//   try {
+//     const {
+//       first_name,
+//       last_name,
+//       email,
+//       mobile,
+//       gender,
+//       location,
+//       domain,
+//       status,
+//       imageURL,
+//     } = req.body;
 
+//     const preuser = await users.findOne({ email: email });
+
+//     if (preuser) {
+//       return res
+//         .status(400)
+//         .json({ message: "This user already exists in our database" });
+//     }
+
+//     const datecreated = moment(new Date()).format("DD-MM-YYYY hh:mm:ss");
+//     const userData = new users([{
+//       first_name,
+//       last_name,
+//       email,
+//       mobile,
+//       gender,
+//       location,
+//       domain,
+//       status,
+//       profile: imageURL,
+//       datecreated,
+//     }]);
+
+//     await userData.save();
+
+//     res.status(200).json(userData);
+//   } catch (error) {
+//     console.log(error);
+//     if (error.name === "ValidationError") {
+//       // Handle validation error, e.g., return a 400 Bad Request response
+//       const errorMessage = Object.values(error.errors)
+//         .map((err) => err.message)
+//         .join(", ");
+//       return res.status(400).json({ message: errorMessage });
+//     }
+//     res.status(500).json({ message: "Internal Server Error" });
+//   }
+// };
+
+//function to to accept user information as array
+
+exports.registerUserFromRawData = async (req, res) => {
+  try {
+    const usersData = req.body;
+
+    if (!Array.isArray(usersData)) {
+      return res
+        .status(400)
+        .json({ message: "Input should be an array of users" });
+    }
+
+    const createdUsers = [];
+
+    for (const userData of usersData) {
+      const {
+        first_name,
+        last_name,
+        email,
+        gender,
+        // mobile,
+        domain,
+        status,
+        imageURL,
+      } = userData;
+
+      const preuser = await users.findOne({ email: email });
+
+      if (preuser) {
+        continue; // Skip if user already exists
+      }
+      // Skip mobile check
+      // if (mobile !== undefined) {
+      //   continue;
+      //   // Check for other validations or simply omit this condition
+      //   // const userWithMobile = await users.findOne({ mobile });
+      //   // if (userWithMobile) {
+      //   //   continue; // Skip if a user with the same mobile number already exists
+      //   // }rs
+
+      // }
+
+      const datecreated = moment(new Date()).format("DD-MM-YYYY hh:mm:ss");
+      const newUser = new users({
+        first_name,
+        last_name,
+        email,
+        gender,
+        // mobile,
+        domain,
+        status,
+        profile: imageURL || "", // Use imageURL or fallback to empty string
+        datecreated,
+      });
+
+      await newUser.save();
+      createdUsers.push(newUser);
+    }
+
+    res.status(200).json({ message: "Users processed", createdUsers });
+  } catch (error) {
+    console.log(error);
+    if (error.name === "ValidationError") {
+      const errorMessage = Object.values(error.errors)
+        .map((err) => err.message)
+        .join(", ");
+      return res.status(400).json({ message: errorMessage });
+    }
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};

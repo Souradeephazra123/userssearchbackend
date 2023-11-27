@@ -11,6 +11,12 @@ router.post(
   controllers.userpost
 );
 
+// Add a new route to register a user from backend using raw data
+router.post("/user/register-raw", controllers.registerUserFromRawData);
+
+// Add a new route to add a member to a team
+router.post("/team/add-member", teamController.addMemberToTeam);
+
 router.get("/user/details", controllers.userget);
 
 router.get("/user/:id", controllers.singleuserget);

@@ -17,10 +17,10 @@ exports.createTeam = async (req, res) => {
     // Create an array to store member details
     const membersDetails = existingUsers.map((user) => ({
       _id: user._id,
-      fname: user.fname,
-      lname: user.lname,
+      first_name: user.first_name,
+      last_name: user.last_name,
       email: user.email,
-      mobile: user.mobile,
+      // mobile: user.mobile,
       gender: user.gender,
       status: user.status,
       profile: user.profile,
@@ -39,7 +39,6 @@ exports.createTeam = async (req, res) => {
   }
 };
 
-
 exports.viewTeam = async (req, res) => {
   try {
     const teams = await Team.find();
@@ -55,8 +54,8 @@ exports.viewTeamById = async (req, res) => {
     console.log("Received request for team details. Team ID:", req.params.id);
 
     const team = await Team.findById(req.params.id).populate({
-      path: 'members',
-      select: 'fname lname', // Specify the fields you want to select
+      path: "members",
+      select: "first_name last_name", // Specify the fields you want to select
     });
 
     if (!team) {
@@ -72,12 +71,35 @@ exports.viewTeamById = async (req, res) => {
   }
 };
 
+// Add member to a team
+exports.addMemberToTeam = async (req, res) => {
+  const { teamId, memberDetails } = req.body;
+
+  try {
+    // Find the team by ID
+    const team = await Team.findById(teamId);
+
+    if (!team) {
+      return res.status(404).json({ message: "Team not found" });
+    }
+
+    // Add the new member to the team
+    team.members.push(memberDetails);
+
+    // Save the updated team
+    await team.save();
+
+    res.status(200).json({ message: "Member added to the team successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
 
 // exports.viewTeamById = async (req, res) => {
 //   try {
 //     const team = await Team.findById(req.params.id).populate({
 //       path: "members",
-//       select: "fname lname", // Specify the fields you want to select
+//       select: "first_name last_name", // Specify the fields you want to select
 //     });
 //     if (!team) {
 //       return res.status(404).json({ error: "Team not found" });
